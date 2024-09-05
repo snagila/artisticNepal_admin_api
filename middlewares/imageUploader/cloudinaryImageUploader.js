@@ -1,4 +1,5 @@
 import multer from "multer";
+import cloudinary from "../../config/cloudinaryConfig.js";
 
 // Configure multer to use memory storage
 export const upload = multer({ storage: multer.memoryStorage() });
