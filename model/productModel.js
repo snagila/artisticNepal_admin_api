@@ -21,10 +21,16 @@ export const deleteProduct = (id) => {
 // };
 
 // edit product
-export const editProuct = (id, formData, imagesArray) => {
+export const editProuct = (id, formData, thumbnailForDb, imagesForDb) => {
   return productSchema.updateOne(
     { _id: id },
-    { $set: { ...formData, images: imagesArray } },
+    {
+      $set: {
+        ...formData,
+        images: [...imagesForDb],
+        thumbnail: thumbnailForDb,
+      },
+    },
     { new: true }
   );
 };

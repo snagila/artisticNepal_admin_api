@@ -11,7 +11,7 @@ export const uploadImagesToCloudinary = (files) => {
         cloudinary.uploader
           .upload_stream({ folder: "Product" }, (error, uploadedResult) => {
             if (error) {
-              return reject(error);
+              return reject("Cloudinary upload error:", error);
             }
 
             return resolve(uploadedResult);
@@ -24,6 +24,7 @@ export const uploadImagesToCloudinary = (files) => {
 
 export const deleteImagesFromCloudinary = (publicIds) => {
   if (typeof publicIds === "string") {
+    // console.log("String");
     return new Promise((resolve, reject) => {
       cloudinary.uploader.destroy(publicIds, (error, result) => {
         if (error) {

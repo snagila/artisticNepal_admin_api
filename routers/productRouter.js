@@ -22,29 +22,36 @@ export const productRouter = express.Router();
 productRouter.post(
   "/",
   adminAuth,
-  upload.array("images", 5),
+  upload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "thumbnail", maxCount: 1 },
+  ]),
   async (req, res) => {
+    console.log(req.files["images"]);
     try {
-      if (req.files?.length > 0) {
-        const uploadResults = await uploadImagesToCloudinary(req.files);
+      const [uploadImage, uploadThumbnail] = await Promise.all([
+        uploadImagesToCloudinary(req.files["images"]),
+        uploadImagesToCloudinary(req.files["thumbnail"]),
+      ]);
 
-        const uploadedImages = uploadResults.map((result) => result.secure_url);
+      const imagesForDb = uploadImage.map((result) => result.secure_url);
+      const thumbnailForDb = uploadThumbnail.map((result) => result.secure_url);
 
-        if (uploadedImages) {
-          req.body.images = uploadedImages;
-          const createdProduct = await createProduct(req.body);
+      if (imagesForDb && thumbnailForDb) {
+        req.body.images = imagesForDb;
+        req.body.thumbnail = thumbnailForDb;
+        const createdProduct = await createProduct(req.body);
 
-          createdProduct?._id
-            ? buildSuccessResponse(
-                res,
-                createdProduct,
-                "Product  added Successfully."
-              )
-            : buildErrorResponse(res, error.message);
-        }
-
-        return;
+        createdProduct?._id
+          ? buildSuccessResponse(
+              res,
+              createdProduct,
+              "Product  added Successfully."
+            )
+          : buildErrorResponse(res, error.message);
       }
+
+      return;
     } catch (error) {
       buildErrorResponse(res, error.message);
       console.log(error.message);
@@ -100,59 +107,115 @@ productRouter.post("/delete/:id", adminAuth, async (req, res) => {
 productRouter.patch(
   "/edit-product/:id",
   adminAuth,
-  upload.array("images", 5),
+  upload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "newThumbnail", maxCount: 1 },
+  ]),
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { existingImage, imagesToDeletefromCloud, ...rest } = req.body;
 
-      // Deleting images from Cloudinary
-      if (typeof imagesToDeletefromCloud === "object") {
-        const urlParts = imagesToDeletefromCloud?.map((imageUrl) =>
-          imageUrl.split("/")
-        );
-        const publicIdWithFolder = urlParts?.map(
-          (urlPart) =>
-            urlPart
-              .slice(urlPart.indexOf("upload") + 2)
-              .join("/")
-              .split(".")[0]
-        );
-        await deleteImagesFromCloudinary(publicIdWithFolder);
+      const {
+        existingImages,
+        imagesToDeletefromCloud,
+        existingThumbnail,
+        thumbnailToDeleteFromCloud,
+        ...rest
+      } = req.body;
+
+      let thumbnailForDb;
+      if (!req.files["newThumbnail"] && existingThumbnail) {
+        thumbnailForDb = [existingThumbnail];
       }
-      if (typeof imagesToDeletefromCloud === "string") {
-        const urlPart = imagesToDeletefromCloud.split("/");
+      if (req.files["newThumbnail"] && thumbnailToDeleteFromCloud) {
+        const urlPart = thumbnailToDeleteFromCloud.split("/");
 
         const publicIdWithFolder = urlPart
           .slice(urlPart.indexOf("upload") + 2)
           .join("/")
           .split(".")[0];
 
-        await deleteImagesFromCloudinary(publicIdWithFolder);
+        const [deleteThumbnail, updatethumbnail] = await Promise.all([
+          deleteImagesFromCloudinary(publicIdWithFolder),
+          uploadImagesToCloudinary(req.files["newThumbnail"]),
+        ]);
+        const uploaded = updatethumbnail.map((result) => result.secure_url);
+        thumbnailForDb = uploaded;
       }
 
-      let imagesForDb = [];
-      if (req.files.length > 0 && !existingImage) {
-        const uploadResults = await uploadImagesToCloudinary(req.files);
-        imagesForDb = uploadResults.map((result) => result.secure_url);
-      }
-      if (req.files.length === 0 && existingImage) {
-        imagesForDb = [...imagesForDb, ...existingImage];
-      }
-      if (req.files.length > 0 && existingImage) {
-        const uploadResults = await uploadImagesToCloudinary(req.files);
-        const uploadedImages = uploadResults.map((result) => result.secure_url);
-        imagesForDb = [...uploadedImages, ...existingImage];
-      }
-      const editedProduct = await editProuct(id, rest, imagesForDb);
+      // THIS IS IMAGES EDITING PART ============================
+      if (!imagesToDeletefromCloud?.length > 0) {
+      } else {
+        if (typeof imagesToDeletefromCloud === "object") {
+          const urlParts = imagesToDeletefromCloud?.map((imageUrl) =>
+            imageUrl.split("/")
+          );
+          const publicIdWithFolder = urlParts?.map(
+            (urlPart) =>
+              urlPart
+                .slice(urlPart.indexOf("upload") + 2)
+                .join("/")
+                .split(".")[0]
+          );
 
+          await deleteImagesFromCloudinary(publicIdWithFolder);
+        }
+        if (typeof imagesToDeletefromCloud === "string") {
+          const urlPart = imagesToDeletefromCloud.split("/");
+
+          const publicIdWithFolder = urlPart
+            .slice(urlPart.indexOf("upload") + 2)
+            .join("/")
+            .split(".")[0];
+
+          await deleteImagesFromCloudinary(publicIdWithFolder);
+        }
+      }
+
+      let imagesForDb;
+
+      if (req.files["images"]?.length > 0 && !existingImages) {
+        const uploadResults = await uploadImagesToCloudinary(
+          req.files["images"]
+        );
+        const uploaded = uploadResults.map((result) => result.secure_url);
+        imagesForDb = [...uploaded];
+      }
+
+      if (!req.files["images"] && existingImages) {
+        if (typeof existingImages === "string") {
+          imagesForDb = [existingImages];
+        } else {
+          imagesForDb = [...existingImages];
+        }
+      }
+
+      if (req.files["images"]?.length > 0 && existingImages) {
+        const uploadResults = await uploadImagesToCloudinary(
+          req.files["images"]
+        );
+        const uploaded = uploadResults.map((result) => result.secure_url);
+        if (typeof existingImages === "string") {
+          imagesForDb = [...uploaded, existingImages];
+        } else {
+          imagesForDb = [...uploaded, ...existingImages];
+        }
+      }
+
+      const editedProduct = await editProuct(
+        id,
+        rest,
+        thumbnailForDb,
+        imagesForDb
+      );
+      // console.log(editedProduct);
       if (editedProduct) {
         buildSuccessResponse(res, editedProduct, "Product Successfully edited");
       } else {
         buildErrorResponse(res, "Product update failed.");
       }
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       buildErrorResponse(
         res,
         "Sorry! Could not edit the product. Please try again."
