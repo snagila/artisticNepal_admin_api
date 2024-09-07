@@ -16,6 +16,15 @@ export const deleteProduct = (id) => {
 };
 
 // edit existing image links
-export const editImageLinks = (id, imageLinks) => {
-  return productSchema.updateOne({ _id: id }, { $set: { images: imageLinks } });
+// export const editImageLinks = (id, imageLinks) => {
+//   return productSchema.updateOne({ _id: id }, { $set: { images: imageLinks } });
+// };
+
+// edit product
+export const editProuct = (id, formData, imagesArray) => {
+  return productSchema.updateOne(
+    { _id: id },
+    { $set: { ...formData, images: imagesArray } },
+    { new: true }
+  );
 };

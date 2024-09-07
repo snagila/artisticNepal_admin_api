@@ -21,3 +21,30 @@ export const uploadImagesToCloudinary = (files) => {
     })
   );
 };
+
+export const deleteImagesFromCloudinary = (publicIds) => {
+  if (typeof publicIds === "string") {
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicIds, (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+
+        return resolve(result);
+      });
+    });
+  }
+  return Promise.all(
+    publicIds.map((publicId) => {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader.destroy(publicId, (error, result) => {
+          if (error) {
+            return reject(error);
+          }
+
+          return resolve(result);
+        });
+      });
+    })
+  );
+};
