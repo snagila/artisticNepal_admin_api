@@ -10,8 +10,12 @@ export const getCategories = () => {
 };
 
 // update category
-export const updateCategory = (id, formData) => {
-  return categorySchema.updateOne({ _id: id }, { $set: formData });
+export const updateCategory = (id, rest, thumbnailForDb) => {
+  return categorySchema.updateOne(
+    { _id: id },
+    { $set: { ...rest, categoryThumbnail: thumbnailForDb } },
+    { new: true }
+  );
 };
 
 // delete category

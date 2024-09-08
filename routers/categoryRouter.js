@@ -10,28 +10,48 @@ import {
   buildErrorResponse,
   buildSuccessResponse,
 } from "../utility/responseHelper.js";
+import {
+  deleteImagesFromCloudinary,
+  upload,
+  uploadImagesToCloudinary,
+} from "../middlewares/imageUploader/cloudinaryImageUploader.js";
 
 export const categoryRouter = express.Router();
 
 // create new category
-categoryRouter.post("/", adminAuth, async (req, res) => {
-  try {
-    const result = await createCategory(req.body);
-    if (result._id) {
-      return buildSuccessResponse(
-        res,
-        result,
-        "New Category Successfully Created"
+categoryRouter.post(
+  "/",
+
+  upload.array("categoryThumbnail", 1),
+  adminAuth,
+  async (req, res) => {
+    try {
+      const uploadCategoryThumbnail = await uploadImagesToCloudinary(req.files);
+      const thumbnailForDb = uploadCategoryThumbnail?.map(
+        (result) => result.secure_url
       );
+
+      if (uploadCategoryThumbnail) {
+        req.body.categoryThumbnail = thumbnailForDb;
+        console.log("body", req.body);
+        const result = await createCategory(req.body);
+        if (result._id) {
+          return buildSuccessResponse(
+            res,
+            result,
+            "New Category Successfully Created"
+          );
+        }
+      }
+    } catch (error) {
+      if (error.code === 11000) {
+        error.message = "Category already exists.";
+      }
+      console.log(error.message);
+      buildErrorResponse(res, error.message);
     }
-  } catch (error) {
-    if (error.code === 11000) {
-      error.message = "Category already exists.";
-    }
-    console.log(error.message);
-    buildErrorResponse(res, error.message);
   }
-});
+);
 
 // get categories
 categoryRouter.get("/", adminAuth, async (req, res) => {
@@ -47,21 +67,46 @@ categoryRouter.get("/", adminAuth, async (req, res) => {
 });
 
 // update Categories
-categoryRouter.patch("/:id", adminAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const formData = req.body;
-    const editCategory = await updateCategory(id, formData);
-    if (editCategory) {
-      buildSuccessResponse(res, {}, "Category updated successfully");
+categoryRouter.patch(
+  "/edit-category/:id",
+  upload.array("newThumbnail", 1),
+  adminAuth,
+  async (req, res) => {
+    try {
+      const { thumbnailToDeleteFromCloud, existingThumbnail, ...rest } =
+        req.body;
+      const { id } = req.params;
+      let thumbnailForDb;
+      if (req.files && thumbnailToDeleteFromCloud) {
+        const urlPart = thumbnailToDeleteFromCloud.split("/");
+        const publicIdWithFolder = urlPart
+          .slice(urlPart.indexOf("upload") + 2)
+          .join("/")
+          .split(".")[0];
+        const [deleteThumbnail, updatethumbnail] = await Promise.all([
+          deleteImagesFromCloudinary(publicIdWithFolder),
+          uploadImagesToCloudinary(req.files),
+        ]);
+        const uploaded = updatethumbnail.map((result) => result.secure_url);
+        thumbnailForDb = uploaded;
+      }
+      if (existingThumbnail) {
+        thumbnailForDb = existingThumbnail;
+      }
+      console.log(rest);
+
+      const editCategory = await updateCategory(id, rest, thumbnailForDb);
+      if (editCategory) {
+        buildSuccessResponse(res, {}, "Category updated successfully");
+        return;
+      }
       return;
+    } catch (error) {
+      console.log(error.message);
+      return buildErrorResponse(res, error.message);
     }
-    return;
-  } catch (error) {
-    console.log(error.message);
-    return buildErrorResponse(res, error.message);
   }
-});
+);
 
 // delete Category
 categoryRouter.delete("/:id", adminAuth, async (req, res) => {

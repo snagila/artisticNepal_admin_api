@@ -27,7 +27,6 @@ productRouter.post(
     { name: "thumbnail", maxCount: 1 },
   ]),
   async (req, res) => {
-    console.log(req.files["images"]);
     try {
       const [uploadImage, uploadThumbnail] = await Promise.all([
         uploadImagesToCloudinary(req.files["images"]),

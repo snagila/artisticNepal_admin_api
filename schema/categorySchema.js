@@ -6,6 +6,11 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    categoryThumbnail: [
+      {
+        type: String,
+      },
+    ],
   },
   { timestamps: true }
 );
