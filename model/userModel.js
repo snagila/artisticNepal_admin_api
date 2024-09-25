@@ -10,11 +10,22 @@ export const findUserByEmail = (userEmail) => {
   return userSchema.findOne({ email: userEmail });
 };
 
-// update user details
+// update  details
 export const updateUser = (findByEmail, updatepart) => {
   return userSchema.findOneAndUpdate(
     { email: findByEmail },
     { $set: updatepart },
     { new: true }
   );
+};
+
+// deleteUser
+export const deleteUserDetails = (userId) => {
+  console.log(userId);
+  return userSchema.deleteOne({ _id: userId });
+};
+
+// get all users
+export const getAllUsers = () => {
+  return userSchema.find({});
 };

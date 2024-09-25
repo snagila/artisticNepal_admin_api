@@ -21,7 +21,7 @@ export const sendVerificationLinkEmail = (user, verificationUrl) => {
   const { email, firstName, lastName } = user;
 
   const emailFormat = {
-    from: `${process.env.SMTP_USER}`,
+    from: `Artistic Nepal<${process.env.SMTP_USER}>`,
     to: email,
     subject: "Email Verification For Your Account",
     html: `
@@ -37,7 +37,7 @@ export const sendVerificationLinkEmail = (user, verificationUrl) => {
                 <p>Thank you for signing up with us. To complete your registration, please click the link below to verify your email address:</p>
                 <p><a href="${verificationUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none;">Verify Email</a></p>
                 <p>If you did not sign up for an account, please ignore this email.</p>
-                <p>Thank you,<br> ECO DEN</p>
+                <p>Thank you,<br> Artistic Nepal</p>
             </td>
         </tr>
     </table>
@@ -50,7 +50,7 @@ export const sendAccountVerifiedEmail = (user, loginUrl) => {
   const { email, firstName, lastName } = user;
 
   const emailFormat = {
-    from: `${process.env.SMTP_USER}`,
+    from: `Artistic Nepal<${process.env.SMTP_USER}>`,
     to: email,
     subject: "Account Verified",
     html: `
@@ -80,7 +80,7 @@ export const sendResetPassword = (user, resetUrl) => {
   const { email, firstName, lastName } = user;
 
   const emailFormat = {
-    from: `Eco Den<${process.env.SMTP_USER}>`,
+    from: `Artistic Nepal<${process.env.SMTP_USER}>`,
     to: email,
     subject: "Password Reset",
     html: `
@@ -110,7 +110,7 @@ export const sendPasswordChanged = (user, resetUrl) => {
   const { email, firstName, lastName } = user;
 
   const emailFormat = {
-    from: `Eco Den<${process.env.SMTP_USER}>`,
+    from: `Artistic Nepal<${process.env.SMTP_USER}>`,
     to: email,
     subject: "Password Reset Successfully",
     html: `

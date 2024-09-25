@@ -5,6 +5,7 @@ import { buildErrorResponse } from "../utility/responseHelper.js";
 export const adminAuth = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
+    // console.log(authorization);
     const decodedAccessJWT = verifyAccessJWT(authorization);
     if (!decodedAccessJWT) {
       throw new Error("Invalid token,UnAuthorized.");
@@ -18,6 +19,7 @@ export const adminAuth = async (req, res, next) => {
       }
     }
   } catch (error) {
+    console.log(error.message);
     buildErrorResponse(res, error.message || "Invalid token,UnAuthorized.");
   }
 };
