@@ -280,3 +280,22 @@ adminRouter.post("/accessJWT", async (req, res) => {
     buildErrorResponse(res, error.message);
   }
 });
+
+// logout user admin
+adminRouter.post("/logout", async (req, res) => {
+  try {
+    console.log(req.body);
+    const { email } = req.body;
+    console.log(email);
+    const [deleteSession, deleteRefreshJwt] = await Promise.all([
+      deletePreviousAccessTokens(id),
+      updateUser(email, { refreshJWT: "" }),
+    ]);
+    if (deleteSession && deleteRefreshJwt) {
+      buildSuccessResponse(res, "", "");
+    }
+  } catch (error) {
+    console.log("error.message", message);
+    buildErrorResponse(res, error.message);
+  }
+});

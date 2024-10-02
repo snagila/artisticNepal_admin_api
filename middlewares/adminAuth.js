@@ -5,14 +5,14 @@ import { buildErrorResponse } from "../utility/responseHelper.js";
 export const adminAuth = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
-    // console.log(authorization);
+
     const decodedAccessJWT = verifyAccessJWT(authorization);
     if (!decodedAccessJWT) {
       throw new Error("Invalid token,UnAuthorized.");
     }
     if (decodedAccessJWT) {
       const admin = await findUserByEmail(decodedAccessJWT.email);
-
+      // console.log(admin);
       if (admin.isVerified && admin.role === "admin") {
         (admin.password = undefined), (req.adminInfo = admin);
         return next();

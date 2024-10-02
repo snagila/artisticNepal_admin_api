@@ -21,7 +21,6 @@ export const updateUser = (findByEmail, updatepart) => {
 
 // deleteUser
 export const deleteUserDetails = (userId) => {
-  console.log(userId);
   return userSchema.deleteOne({ _id: userId });
 };
 
