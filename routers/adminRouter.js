@@ -284,18 +284,17 @@ adminRouter.post("/accessJWT", async (req, res) => {
 // logout user admin
 adminRouter.post("/logout", async (req, res) => {
   try {
-    console.log(req.body);
     const { email } = req.body;
-    console.log(email);
+
     const [deleteSession, deleteRefreshJwt] = await Promise.all([
-      deletePreviousAccessTokens(id),
+      deletePreviousAccessTokens(email),
       updateUser(email, { refreshJWT: "" }),
     ]);
     if (deleteSession && deleteRefreshJwt) {
       buildSuccessResponse(res, "", "");
     }
   } catch (error) {
-    console.log("error.message", message);
+    console.log("error.message", error.message);
     buildErrorResponse(res, error.message);
   }
 });
