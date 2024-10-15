@@ -33,7 +33,7 @@ categoryRouter.post(
 
       if (uploadCategoryThumbnail) {
         req.body.categoryThumbnail = thumbnailForDb;
-        console.log("body", req.body);
+
         const result = await createCategory(req.body);
         if (result._id) {
           return buildSuccessResponse(
